@@ -277,6 +277,20 @@ With Geeknote it's possible to rename existing notebooks in Evernote.
 --title &lt;new name&gt;
 :   New title for notebook
 
+## Notebooks: backup the notebook
+You can backup your Evernote notebook 
+
+### Synopsis
+    $ python geeknote.py backup --notebook <name> [--outputFormat <format>]
+
+### Options
+
+--notebook &lt;old name&gt;
+: Name of existing notebook you want to backup.
+
+--outputFormat &lt;format&gt;
+: Output format : "console" : print Notes to console, "file" : create a folder with a file by Notes
+
 ### Examples
     $ geeknote notebook-edit --notebook "Sport diets" --title "Hangover"
 

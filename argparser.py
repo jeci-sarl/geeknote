@@ -107,6 +107,7 @@ COMMANDS_DICT = {
         "firstArg": "--notebook",
         "arguments": {
             "--notebook":   {"altName": "-nb", "help": "The name of a notebook to backup."},
+            "--outputFormat":   {"altName": "-of", "help": "console, zip, zim"},
         }
     },
 

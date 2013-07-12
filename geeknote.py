@@ -36,7 +36,7 @@ from storage import Storage
 import editor
 import tools
 from log import logging
-
+from contextlib import contextmanager
 
 # decorator to disable evernote connection on create instance of GeekNote
 def GeekNoneDBConnectOnly(func):
@@ -201,11 +201,10 @@ class GeekNote(object):
         # print result
         self.getStorage().setSearch(result)
 
-        for note in result.notes:
-            guid = note.guid
-            note = self.getNoteStore().getNote(self.authToken, guid, True, True, True, True)
-            out.showNote(note)
-            out.printLine('======================')
+        return result.notes
+
+    def getNote(self, noteUid):
+        return self.getNoteStore().getNote(self.authToken, noteUid, True, True, True, True)
 
     @EdamException
     def createNote(self, title, content, tags=None, notebook=None, created=None):
@@ -466,9 +465,27 @@ class Notebooks(GeekNoteConnector):
         result = self.getEvernote().findNotebooks()
         out.printList(result)
 
-    def backup(self, notebook):
+    def backup(self, notebook, outputFormat='console'):
+        logging.debug("Backup to  %s" % str(outputFormat))
+
         notebook = self._searchNotebook(notebook)
-        result = self.getEvernote().loadNotes(notebook)
+        notes = self.getEvernote().loadNotes(notebook)
+
+        if outputFormat=='file':
+            if not os.path.exists(notebook.name):
+                os.mkdir(notebook.name)
+            else:
+                out.failureMessage("Folder %s already exist" % notebook.name)
+
+        for n in notes:
+            note = self.getEvernote().getNote(n.guid)
+            if outputFormat=='console':
+                out.showNote(note)
+                out.printLine('======================')
+            if outputFormat=='file':  
+                with opened(notebook.name + os.sep + note.title, "w") as f:
+                    with stdout_redirected(f):
+                        out.showNote(note)
 
     def create(self, title):
         self.connectToEvertone()
@@ -765,6 +782,25 @@ def modifyArgsByStdinStream():
     }
 
     return ('create', ARGS)
+
+@contextmanager
+def stdout_redirected(new_stdout):
+    """ http://www.python.org/dev/peps/pep-0343/ """
+    save_stdout = sys.stdout
+    sys.stdout = new_stdout
+    try:
+        yield None
+    finally:
+        sys.stdout = save_stdout
+
+@contextmanager
+def opened(filename, mode="r"):
+    """ http://www.python.org/dev/peps/pep-0343/ """
+    f = open(filename, mode)
+    try:
+        yield f
+    finally:
+        f.close()
 
 def main(args=None):
     try:
