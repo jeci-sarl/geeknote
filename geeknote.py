@@ -166,7 +166,7 @@ class GeekNote(object):
     WORK WITH NOTEST
     """
     @EdamException
-    def findNotes(self, keywords, count, createOrder=False):
+    def findNotes(self, keywords, count, createOrder=False, notebookGuid=False):
         
         noteFilter = NoteStore.NoteFilter(order=Types.NoteSortOrder.RELEVANCE)
         if createOrder:
@@ -174,6 +174,10 @@ class GeekNote(object):
 
         if keywords:
             noteFilter.words = keywords
+
+        if notebookGuid:
+            noteFilter.notebookGuid = notebookGuid
+
         return self.getNoteStore().findNotes(self.authToken, noteFilter, 0, count)
 
     @EdamException
@@ -183,6 +187,25 @@ class GeekNote(object):
             raise Exception("Note content must be an instanse of Note, '%s' given." % type(note))
 
         note.content = self.getNoteStore().getNoteContent(self.authToken, note.guid)
+
+    def loadNotes(self, notebook):
+        """ Loading all notes of a notebook for backup purpose """
+        result = self.findNotes(False, 25, notebookGuid=notebook.guid)
+        if result.totalNotes == 0:
+            out.successMessage("Notes have not been found.")
+        if result.totalNotes > 250:
+            out.successMessage("More than 250 notes ! '%s'" % result.totalNotes)
+            # FIXME : if more than 250 notes
+
+        # save search result
+        # print result
+        self.getStorage().setSearch(result)
+
+        for note in result.notes:
+            guid = note.guid
+            note = self.getNoteStore().getNote(self.authToken, guid, True, True, True, True)
+            out.showNote(note)
+            out.printLine('======================')
 
     @EdamException
     def createNote(self, title, content, tags=None, notebook=None, created=None):
@@ -442,6 +465,10 @@ class Notebooks(GeekNoteConnector):
     def list(self):
         result = self.getEvernote().findNotebooks()
         out.printList(result)
+
+    def backup(self, notebook):
+        notebook = self._searchNotebook(notebook)
+        result = self.getEvernote().loadNotes(notebook)
 
     def create(self, title):
         self.connectToEvertone()
@@ -805,6 +832,9 @@ def main(args=None):
 
         if COMMAND == 'notebook-remove':
             Notebooks().remove(**ARGS)
+
+        if COMMAND == 'backup':
+            Notebooks().backup(**ARGS)
 
         # Tags
         if COMMAND == 'tag-list':

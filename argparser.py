@@ -102,6 +102,13 @@ COMMANDS_DICT = {
             "--title":      {"altName": "-t", "help": "Set the new name of notebook."},
         }
     },
+    "backup": {
+        "help": "Backup notebook.",
+        "firstArg": "--notebook",
+        "arguments": {
+            "--notebook":   {"altName": "-nb", "help": "The name of a notebook to backup."},
+        }
+    },
 
     # Tags
     "tag-list": {
